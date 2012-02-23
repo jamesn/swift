@@ -19,6 +19,7 @@ from __future__ import with_statement
 import cPickle as pickle
 import errno
 import os
+import platform
 import time
 import traceback
 from datetime import datetime
@@ -569,7 +570,10 @@ class ObjectController(object):
                     chunk = chunk[written:]
                 # For large files sync every 512MB (by default) written
                 if upload_size - last_sync >= self.bytes_per_sync:
-                    tpool.execute(os.fdatasync, fd)
+                    if platform.system() == 'Linux':
+                        tpool.execute(os.fdatasync, fd)
+                    else:
+                        tpool.execute(os.fsync, fd)
                     drop_buffer_cache(fd, last_sync, upload_size - last_sync)
                     last_sync = upload_size
 
